@@ -1,4 +1,4 @@
-# OVerview
+# Overview
 This repository focuses on learning Android Encryption through practical examples.
 - Full Disk Encryption (FDE)
 - File-Based Encryption (FBE)
