@@ -2,7 +2,7 @@
 set -e
 
 echo "[+] Install linux packages"
-sudo apt install -y curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent
+sudo apt install -y curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio
 
 echo "[+] Configure environment settings"
 export ANDROID_SDK_ROOT=$HOME/android
@@ -40,5 +40,9 @@ rm cmdlinetools-linux.zip
 
 echo "[+] Listing Android images"
 emulator -list-avds
+
+echo "[+] Installation complete"
+java --version
+echo "[+] Requires Java 17+."
 
 popd
