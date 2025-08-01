@@ -2,7 +2,7 @@
 set -e
 
 echo "[+] Install linux packages"
-sudo apt install -y curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio
+sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio
 
 echo "[+] Configure environment settings"
 export ANDROID_SDK_ROOT=$HOME/android
@@ -21,22 +21,21 @@ pushd ~/android/sdk
 echo "[+] Download Android command-line tools"
 curl https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o cmdlinetools-linux.zip
 unzip cmdlinetools-linux.zip
+rm cmdlinetools-linux.zip
 
 echo "[+] Download android images"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "emulator"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools"
+
+echo "[+] Download and creating Android 6.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-23;google_apis;x86_64"
-sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-34;google_apis_playstore;x86_64"
-
-echo "[+] Creating android images"
 avdmanager create avd -n android6 -k "system-images;android-23;google_apis;x86_64"
-avdmanager create avd -n android14 -k "system-images;android-34;google_apis_playstore;x86_64"
-
-echo "[+] Enabling HW keyboard for android images"
 sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android6.avd/config.ini
-sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android14.avd/config.ini
 
-rm cmdlinetools-linux.zip
+echo "[+] Download and creating Android 14.0 image"
+sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-34;google_apis_playstore;x86_64"
+avdmanager create avd -n android14 -k "system-images;android-34;google_apis_playstore;x86_64"
+sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android14.avd/config.ini
 
 echo "[+] Listing Android images"
 emulator -list-avds
