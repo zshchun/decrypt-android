@@ -24,8 +24,7 @@ unzip cmdlinetools-linux.zip
 rm cmdlinetools-linux.zip
 
 echo "[+] Download android images"
-sdkmanager --sdk_root=$ANDROID_SDK_ROOT "emulator"
-sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools"
+sdkmanager --sdk_root=$ANDROID_SDK_ROOT "emulator" "platform-tools"
 
 echo "[+] Download and creating Android 6.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-23;google_apis;x86_64"
