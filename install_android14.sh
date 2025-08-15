@@ -2,7 +2,7 @@
 set -e
 
 echo "[+] Install linux packages"
-sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio
+sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool
 
 echo "[+] Configure environment settings"
 export ANDROID_SDK_ROOT=$HOME/android
