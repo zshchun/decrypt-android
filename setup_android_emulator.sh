@@ -19,7 +19,7 @@ mkdir -p ~/android/sdk
 pushd ~/android/sdk
 
 echo "[+] Download Android command-line tools"
-curl https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o cmdlinetools-linux.zip
+curl https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip -o cmdlinetools-linux.zip
 unzip cmdlinetools-linux.zip
 rm cmdlinetools-linux.zip
 
@@ -30,6 +30,12 @@ echo "[+] Download and creating Android 6.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-23;google_apis;x86_64"
 avdmanager create avd -n android6 -k "system-images;android-23;google_apis;x86_64"
 sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android6.avd/config.ini
+
+echo "[+] Download and creating Android 10.0 image"
+sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-29;google_apis_playstore;x86_64" "ndk;21.0.6113669"
+avdmanager create avd -n android10 -k "system-images;android-29;google_apis_playstore;x86_64"
+sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android10.avd/config.ini
+exit
 
 echo "[+] Download and creating Android 14.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-34;google_apis_playstore;x86_64"
