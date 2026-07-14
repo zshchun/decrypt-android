@@ -2,7 +2,7 @@
 set -e
 
 echo "[+] Install linux packages"
-sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool
+sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd
 
 echo "[+] Configure environment settings"
 export ANDROID_SDK_ROOT=$HOME/android
@@ -48,5 +48,7 @@ emulator -list-avds
 echo "[+] Installation complete"
 java --version
 echo "[+] Requires Java 17+."
+
+# pip install aeroot
 
 popd
