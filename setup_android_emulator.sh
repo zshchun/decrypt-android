@@ -2,7 +2,7 @@
 set -e
 
 echo "[+] Install linux packages"
-sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd
+sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd tree fdisk cryptsetup openssl
 
 echo "[+] Configure environment settings"
 export ANDROID_SDK_ROOT=$HOME/android
@@ -30,17 +30,19 @@ echo "[+] Download and creating Android 6.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-23;google_apis;x86_64"
 avdmanager create avd -n android6 -k "system-images;android-23;google_apis;x86_64"
 sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android6.avd/config.ini
+sed -i 's/^disk\.dataPartition\.size=.*/disk.dataPartition.size=2G/' $HOME/.android/avd/android6.avd/config.ini
 
 echo "[+] Download and creating Android 10.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-29;google_apis_playstore;x86_64" "ndk;21.0.6113669"
 avdmanager create avd -n android10 -k "system-images;android-29;google_apis_playstore;x86_64"
 sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android10.avd/config.ini
-exit
+sed -i 's/^disk\.dataPartition\.size=.*/disk.dataPartition.size=2G/' $HOME/.android/avd/android10.avd/config.ini
 
 echo "[+] Download and creating Android 14.0 image"
 sdkmanager --sdk_root=$ANDROID_SDK_ROOT "system-images;android-34;google_apis_playstore;x86_64"
 avdmanager create avd -n android14 -k "system-images;android-34;google_apis_playstore;x86_64"
 sed -i 's/^\(hw.keyboard\s*=\s*\).*/\1yes/' $HOME/.android/avd/android14.avd/config.ini
+sed -i 's/^disk\.dataPartition\.size=.*/disk.dataPartition.size=4G/' $HOME/.android/avd/android14.avd/config.ini
 
 echo "[+] Listing Android images"
 emulator -list-avds

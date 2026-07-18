@@ -21,14 +21,23 @@ $ emulator @android6
 $ qemu-img convert -O raw ~/.android/avd/android6.avd/userdata-qemu.img.qcow2 userdata.enc
 $ qemu-img convert -O raw ~/.android/avd/android6.avd/encryptionkey.img.qcow2 footer.img
 
-$ ./fbe-decrypt.py
+$ ./fde-decrypt.py -i userdata.enc -f footer.img -o userdata.dec
 ```
 
 # FBE
 ```
 emulator @android14
 
-qemu-img convert -f qcow2 -O raw ~/.android/avd/android14.avd/userdata-qemu.img.qcow2 userdata.enc
+qemu-img convert -f qcow2 -O raw ~/.android/avd/android14.avd/userdata-qemu.img.qcow2 userdata.raw
 
-./fbe-decrypt.py
+adb root
+adb pull /metadata/vold/metadata_encryption metadata_encryption
+
+./metadata.py -i userdata.raw -o userdata.enc -k metadata_encryption
+
+debugfs -R stats userdata.enc
+debugfs -R 'ls -p /' userdata.enc
+
+./fbe-decrypt.py -i userdata.enc -o dec
 ```
+
