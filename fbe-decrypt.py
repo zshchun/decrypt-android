@@ -397,7 +397,7 @@ def listdir(inode_data, dir_inode=None, decrypt=False, output_dir=None):
         directory_context = get_fscrypt_context(dir_inode)
         name_key = get_file_key(
             dir_inode,
-            verbose=True,
+            verbose=False,
             fscrypt_ctx=directory_context,
         )
         print(f"- Directory-name key: {name_key[:32].hex()}")
@@ -446,7 +446,7 @@ def listdir(inode_data, dir_inode=None, decrypt=False, output_dir=None):
             content_context = get_fscrypt_context(inode)
             content_key = get_file_key(
                 inode,
-                verbose=True,
+                verbose=False,
                 fscrypt_ctx=content_context,
             )
             info = stat(inode)

@@ -103,11 +103,9 @@ def decrypt_sector(key, salt, sector, ciphertext):
     @param ciphertext encrypted sector data
     @return decrypted sector data
     """
-    c = AES.new(salt, AES.MODE_ECB)
     ctr = int.to_bytes(sector, byteorder='little', length=16)
-    essiv = c.encrypt(ctr)
-    c = AES.new(key, AES.MODE_CBC, iv=essiv)
-    return c.decrypt(ciphertext)
+    essiv = AES.new(salt, AES.MODE_ECB).encrypt(ctr)
+    return AES.new(key, AES.MODE_CBC, iv=essiv).decrypt(ciphertext)
 
 
 def decrypt_disk():
