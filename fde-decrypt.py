@@ -223,6 +223,11 @@ def parse_footer():
     return ftr
 
 
+def init_ftr(footer):
+    global ftr
+    ftr = footer
+
+
 def bruteforce_pin():
     """Bruteforce the PIN
 
@@ -241,7 +246,10 @@ def bruteforce_pin():
     elif ftr.crypt_type == CRYPT_TYPE_PIN:
         num_cpu = multiprocessing.cpu_count()
         print(f"- Brute force a PIN using {num_cpu} CPUs")
-        with multiprocessing.Pool(processes=num_cpu) as pool:
+        with multiprocessing.Pool(processes=num_cpu,
+                                  initializer=init_ftr,
+                                  initargs=(ftr,),
+                                  ) as pool:
             for idx, result in tqdm(enumerate(pool.imap(get_master_key, range(10000))), total=10000):
                 if result:
                     decrypted_key = result
