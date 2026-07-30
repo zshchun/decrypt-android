@@ -41,3 +41,30 @@ debugfs -R 'ls -p /' userdata.enc
 ./fbe-decrypt.py -i userdata.enc -o dec
 ```
 
+## Cleanup paths
+
+After completing the lab, close all Android Emulator instances and remove the
+following default paths if the Android lab environment is no longer needed.
+
+### Linux
+
+```text
+$HOME/.android
+$HOME/android
+```
+
+### macOS
+
+```text
+$HOME/.android
+$HOME/Library/Android/sdk
+$HOME/.android-lab
+```
+
+### Windows
+
+```text
+%USERPROFILE%\.android
+%LOCALAPPDATA%\Android
+%LOCALAPPDATA%\AndroidLab
+```

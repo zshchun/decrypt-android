@@ -325,7 +325,7 @@ $sdkPackages = @(
 )
 Invoke-Native $sdkManager (@("--sdk_root=$sdkRoot") + $sdkPackages)
 
-Write-Host "[+] Create Android 6 and Android 14 AVDs"
+Write-Host "[+] Recreate Android 6 and Android 14 AVDs"
 $emulator = Join-Path $sdkRoot "emulator\emulator.exe"
 $avdManager = Join-Path $commandLineTools "bin\avdmanager.bat"
 $avdHome = if ($env:ANDROID_AVD_HOME) {
@@ -334,16 +334,14 @@ $avdHome = if ($env:ANDROID_AVD_HOME) {
 else {
     Join-Path $env:USERPROFILE ".android\avd"
 }
-$existingAvds = @(& $emulator -list-avds | ForEach-Object { $_.Trim() })
 $avds = @(
     @("android6", "system-images;android-23;google_apis;x86_64", "2G"),
     @("android14", "system-images;android-34;google_apis;x86_64", "4G")
 )
 foreach ($avd in $avds) {
-    if ($existingAvds -notcontains $avd[0]) {
-        "no" | & $avdManager create avd --name $avd[0] --package $avd[1]
-        if ($LASTEXITCODE -ne 0) { throw "Failed to create AVD: $($avd[0])" }
-    }
+    "no" | & $avdManager create avd --force `
+        --name $avd[0] --package $avd[1]
+    if ($LASTEXITCODE -ne 0) { throw "Failed to recreate AVD: $($avd[0])" }
     Set-AvdConfig `
         (Join-Path $avdHome "$($avd[0]).avd\config.ini") `
         $avd[2]
