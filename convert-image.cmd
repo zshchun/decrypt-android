@@ -57,10 +57,39 @@ if not exist "%KEY_IN%" (
     exit /b 1
 )
 
-echo [+] Convert %USERDATA_IN% -^> %USERDATA_OUT%
-echo [+] Run: "%QEMU_IMG%" convert -f qcow2 -O raw "%USERDATA_IN%" "%USERDATA_OUT%"
-"%QEMU_IMG%" convert -f qcow2 -O raw "%USERDATA_IN%" "%USERDATA_OUT%"
-if errorlevel 1 exit /b %ERRORLEVEL%
+set "SPLIT_DIR=%TEMP%\convert-image-%RANDOM%-%RANDOM%"
+mkdir "%SPLIT_DIR%" 2>nul
+if errorlevel 1 (
+    echo error: failed to create temporary directory: %SPLIT_DIR% 1>&2
+    exit /b 1
+)
+
+set "SPLIT_VMDK=%SPLIT_DIR%\userdata.vmdk"
+
+echo [+] Convert %USERDATA_IN% -^> split VMDK extents
+echo [+] Run: "%QEMU_IMG%" convert -f qcow2 -O vmdk -o subformat=twoGbMaxExtentFlat "%USERDATA_IN%" "%SPLIT_VMDK%"
+"%QEMU_IMG%" convert -f qcow2 -O vmdk -o subformat=twoGbMaxExtentFlat "%USERDATA_IN%" "%SPLIT_VMDK%"
+if errorlevel 1 (
+    set "CONVERT_EXIT=%ERRORLEVEL%"
+    goto ConvertFailed
+)
+
+echo [+] Merge split VMDK extents -^> %USERDATA_OUT%
+copy /B /Y "%SPLIT_DIR%\userdata-f*.vmdk" "%USERDATA_OUT%"
+if errorlevel 1 (
+    set "CONVERT_EXIT=%ERRORLEVEL%"
+    goto ConvertFailed
+)
+
+echo [+] Verify %USERDATA_OUT%
+"%QEMU_IMG%" compare -f qcow2 -F raw "%USERDATA_IN%" "%USERDATA_OUT%"
+if errorlevel 1 (
+    set "CONVERT_EXIT=%ERRORLEVEL%"
+    goto ConvertFailed
+)
+
+rmdir /S /Q "%SPLIT_DIR%"
+set "SPLIT_DIR="
 
 echo [+] Convert %KEY_IN% -^> %KEY_OUT%
 echo [+] Run: "%QEMU_IMG%" convert -f qcow2 -O raw "%KEY_IN%" "%KEY_OUT%"
@@ -69,6 +98,10 @@ if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo [+] Done
 exit /b 0
+
+:ConvertFailed
+if defined SPLIT_DIR if exist "%SPLIT_DIR%" rmdir /S /Q "%SPLIT_DIR%"
+exit /b %CONVERT_EXIT%
 
 :Usage
 echo Usage: %~nx0 [android6^|android14] 1>&2
