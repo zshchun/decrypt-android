@@ -3,8 +3,10 @@ set -euo pipefail
 
 TOOLS_VERSION=15859902
 TOOLS_HASH="835b62a26162b229b441d1f6d4680383815a270809eb33522c0d480fa5002c4e"
+NDK_VERSION=29.0.14206865
 ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}
 ANDROID_HOME=$ANDROID_SDK_ROOT
+ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
 ANDROID_LAB_VENV=${ANDROID_LAB_VENV:-$HOME/.android-lab/.venv}
 AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 
@@ -54,9 +56,10 @@ write_shell_env() {
 # >>> android lab >>>
 export ANDROID_HOME="$ANDROID_HOME"
 export ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT"
+export ANDROID_NDK_ROOT="$ANDROID_NDK_ROOT"
 export ANDROID_LAB_VENV="$ANDROID_LAB_VENV"
 export JAVA_HOME="$JAVA_HOME"
-export PATH="$ANDROID_LAB_VENV/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$JAVA_HOME/bin:$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$E2FSPROGS_PREFIX/bin:$E2FSPROGS_PREFIX/sbin:\$PATH"
+export PATH="$ANDROID_LAB_VENV/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin:$JAVA_HOME/bin:$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$E2FSPROGS_PREFIX/bin:$E2FSPROGS_PREFIX/sbin:\$PATH"
 # <<< android lab <<<
 EOF
 
@@ -79,15 +82,16 @@ BREW_PREFIX="$(brew --prefix)"
 export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$PATH"
 
 echo "[+] Install macOS packages"
-run brew install openjdk@17 python qemu sqlite e2fsprogs
+run brew install openjdk@21 python qemu sqlite e2fsprogs
 
-JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
+JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
 E2FSPROGS_PREFIX="$(brew --prefix e2fsprogs)"
 export JAVA_HOME
 export ANDROID_HOME
 export ANDROID_SDK_ROOT
+export ANDROID_NDK_ROOT
 export ANDROID_LAB_VENV
-export PATH="$ANDROID_LAB_VENV/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$JAVA_HOME/bin:$E2FSPROGS_PREFIX/bin:$E2FSPROGS_PREFIX/sbin:$PATH"
+export PATH="$ANDROID_LAB_VENV/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin:$JAVA_HOME/bin:$E2FSPROGS_PREFIX/bin:$E2FSPROGS_PREFIX/sbin:$PATH"
 
 echo "[+] Install Android lab Python packages"
 if [[ ! -x "$ANDROID_LAB_VENV/bin/python" ]]; then
@@ -134,12 +138,13 @@ write_shell_env "$SHELL_RC"
 echo "[+] Accept Android SDK licenses"
 "$SDKMANAGER" "--sdk_root=$ANDROID_SDK_ROOT" --licenses < <(yes) >/dev/null
 
-echo "[+] Install emulator, ADB, and Android images"
+echo "[+] Install emulator, ADB, NDK, and Android images"
 ANDROID6_PACKAGE="system-images;android-23;google_apis;arm64-v8a"
 ANDROID14_PACKAGE="system-images;android-34;google_apis;arm64-v8a"
 run "$SDKMANAGER" "--sdk_root=$ANDROID_SDK_ROOT" \
   "platform-tools" \
   "emulator" \
+  "ndk;$NDK_VERSION" \
   "$ANDROID6_PACKAGE" \
   "$ANDROID14_PACKAGE"
 
@@ -163,6 +168,7 @@ run java --version
 run "$ANDROID_SDK_ROOT/platform-tools/adb" version
 run "$ANDROID_SDK_ROOT/emulator/emulator" -list-avds
 run "$SDKMANAGER" --version
+run "$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" --version
 if ! "$ANDROID_SDK_ROOT/emulator/emulator" -accel-check; then
   echo "warning: emulator acceleration check failed. Check macOS Hypervisor.framework support." >&2
 fi

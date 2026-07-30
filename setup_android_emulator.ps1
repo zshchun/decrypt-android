@@ -1,6 +1,6 @@
 <#
 Run from Windows PowerShell. The script requests Administrator privileges
-through UAC when needed.
+through UAC only to configure Windows Hypervisor Platform.
 
 The emulator and AVDs run on Windows through WHPX. This script installs the
 Windows Android SDK, NDK, OpenJDK, Python virtual environment, and lab AVDs.
@@ -10,7 +10,13 @@ If the script requests a reboot, restart Windows and run it again.
 #Requires -Version 5.1
 
 [CmdletBinding()]
-param()
+param(
+    [switch]$EnableWhpxOnly
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
@@ -18,13 +24,37 @@ $isAdministrator = $principal.IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator
 )
 
-if (-not $isAdministrator) {
+if ($EnableWhpxOnly -or $isAdministrator) {
+    if (-not $isAdministrator) {
+        throw "Administrator privileges are required to configure WHPX."
+    }
+
+    Write-Host "[+] Enable Windows Hypervisor Platform"
+    $restartRequired = $false
+    $feature = Get-WindowsOptionalFeature `
+        -Online -FeatureName "HypervisorPlatform"
+    if ($feature.State -ne "Enabled") {
+        $result = Enable-WindowsOptionalFeature `
+            -Online -FeatureName "HypervisorPlatform" -All -NoRestart
+        $restartRequired = $restartRequired -or $result.RestartNeeded
+    }
+    if ($restartRequired) {
+        Write-Warning "Restart Windows, then run this script again."
+        exit 3010
+    }
+    if ($EnableWhpxOnly) {
+        exit 0
+    }
+}
+else {
+    Write-Host "[+] Request Administrator privileges for WHPX"
     $elevationArguments = @(
         "-NoProfile"
         "-ExecutionPolicy"
         "Bypass"
         "-File"
         "`"$PSCommandPath`""
+        "-EnableWhpxOnly"
     )
 
     try {
@@ -36,23 +66,29 @@ if (-not $isAdministrator) {
             -Wait `
             -PassThru `
             -ErrorAction Stop
-        exit $elevatedProcess.ExitCode
     }
     catch {
         throw "Administrator privilege request was cancelled or failed."
     }
-}
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
+    if ($elevatedProcess.ExitCode -eq 3010) {
+        Write-Warning "Restart Windows, then run this script again."
+        exit 3010
+    }
+    if ($elevatedProcess.ExitCode -ne 0) {
+        throw "Windows Hypervisor Platform configuration failed."
+    }
+}
 
 $scriptRoot = Split-Path $PSCommandPath -Parent
 $sdkRoot = Join-Path $env:LOCALAPPDATA "Android\Sdk"
-$ndkVersion = "21.0.6113669"
+$ndkVersion = "29.0.14206865"
 $pythonVersion = "3.14"
 $labRoot = Join-Path $env:LOCALAPPDATA "AndroidLab"
 $venvRoot = Join-Path $labRoot ".venv"
+$jdkRoot = Join-Path $labRoot "jdk"
+$jdkUrl = "https://aka.ms/download-jdk/microsoft-jdk-21-windows-x64.zip"
+$jdkHashUrl = "${jdkUrl}.sha256sum.txt"
 $toolsVersion = "15859902"
 $toolsHash = "90ae805d20434428bffcb699c290860f19bb5f66a67e6b330067e3de801fb04a"
 $toolsUrl = "https://dl.google.com/android/repository/commandlinetools-win-${toolsVersion}_latest.zip"
@@ -126,38 +162,49 @@ if ($processor.VirtualizationFirmwareEnabled -eq $false) {
     throw "Enable Intel VT-x or AMD-V/SVM in UEFI/BIOS, then run this script again."
 }
 
-Write-Host "[+] Enable Windows Hypervisor Platform"
-$restartRequired = $false
-$feature = Get-WindowsOptionalFeature -Online -FeatureName "HypervisorPlatform"
-if ($feature.State -ne "Enabled") {
-    $result = Enable-WindowsOptionalFeature `
-        -Online -FeatureName "HypervisorPlatform" -All -NoRestart
-    $restartRequired = $restartRequired -or $result.RestartNeeded
-}
-if ($restartRequired) {
-    Write-Warning "Restart Windows, then run this script again."
-    exit 3010
-}
-
-Write-Host "[+] Install Microsoft OpenJDK 17"
-$jdkParent = Join-Path $env:ProgramFiles "Microsoft"
-$jdk = Get-ChildItem -LiteralPath $jdkParent `
-    -Directory -Filter "jdk-17*" -ErrorAction SilentlyContinue |
+Write-Host "[+] Install Microsoft OpenJDK 21 for the current user"
+$jdk = Get-ChildItem -LiteralPath $jdkRoot `
+    -Directory -Filter "jdk-21*" -ErrorAction SilentlyContinue |
     Sort-Object Name -Descending |
     Select-Object -First 1
 if (-not $jdk) {
-    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if (-not $winget) {
-        throw "Install Microsoft App Installer (winget), then run this script again."
-    }
-    Invoke-Native $winget.Source @(
-        "install", "--exact", "--id", "Microsoft.OpenJDK.17", "--silent",
-        "--accept-package-agreements", "--accept-source-agreements"
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) (
+        "microsoft-jdk-" + [Guid]::NewGuid().ToString("N")
     )
-    $jdk = Get-ChildItem -LiteralPath $jdkParent `
-        -Directory -Filter "jdk-17*" |
-        Sort-Object Name -Descending |
-        Select-Object -First 1
+    try {
+        $archive = Join-Path $tempRoot "jdk.zip"
+        $hashFile = Join-Path $tempRoot "jdk.zip.sha256sum.txt"
+        $expanded = Join-Path $tempRoot "expanded"
+        New-Item -ItemType Directory -Path $tempRoot | Out-Null
+        Invoke-WebRequest -UseBasicParsing -Uri $jdkUrl -OutFile $archive
+        Invoke-WebRequest -UseBasicParsing -Uri $jdkHashUrl -OutFile $hashFile
+        $expectedHash = [regex]::Match(
+            (Get-Content -LiteralPath $hashFile -Raw),
+            "\b[0-9a-fA-F]{64}\b"
+        )
+        if (
+            (-not $expectedHash.Success) -or
+            ((Get-FileHash -Algorithm SHA256 $archive).Hash -ine
+                $expectedHash.Value)
+        ) {
+            throw "Microsoft OpenJDK checksum mismatch."
+        }
+        Expand-Archive -LiteralPath $archive -DestinationPath $expanded
+        $jdk = Get-ChildItem -LiteralPath $expanded `
+            -Directory -Filter "jdk-21*" |
+            Select-Object -First 1
+        if (-not $jdk) {
+            throw "Microsoft OpenJDK archive has an unexpected layout."
+        }
+        New-Item -ItemType Directory -Path $jdkRoot -Force | Out-Null
+        Move-Item -LiteralPath $jdk.FullName -Destination $jdkRoot
+        $jdk = Get-Item -LiteralPath (Join-Path $jdkRoot $jdk.Name)
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
 }
 $env:JAVA_HOME = $jdk.FullName
 [Environment]::SetEnvironmentVariable("JAVA_HOME", $env:JAVA_HOME, "User")
@@ -198,8 +245,7 @@ Invoke-Native $venvPython @(
 )
 Invoke-Native $venvPython @(
     "-m", "pip", "install",
-    "frida-tools", "pycryptodomex", "cryptography", "tqdm", "telnetlib3",
-    "aeroot"
+    "pycryptodomex", "cryptography", "tqdm"
 )
 
 Write-Host "[+] Install Android command-line tools"
@@ -246,13 +292,21 @@ $sessionPaths = @(
     (Join-Path $sdkRoot "platform-tools"),
     (Join-Path $sdkRoot "emulator"),
     (Join-Path $commandLineTools "bin"),
-    (Join-Path $ndkRoot "prebuilt\windows-x86_64\bin"),
     (Join-Path $ndkRoot "toolchains\llvm\prebuilt\windows-x86_64\bin"),
     (Join-Path $env:JAVA_HOME "bin")
 )
+$legacyNdkRoot = Join-Path $sdkRoot "ndk\21.0.6113669"
+$removedSessionPaths = @(
+    (Join-Path $legacyNdkRoot "prebuilt\windows-x86_64\bin"),
+    (Join-Path $legacyNdkRoot "toolchains\llvm\prebuilt\windows-x86_64\bin")
+)
 $envPathEntries = @(
     $env:Path -split ";" |
-        Where-Object { $_ -and ($sessionPaths -notcontains $_) }
+        Where-Object {
+            $_ -and
+            ($sessionPaths -notcontains $_) -and
+            ($removedSessionPaths -notcontains $_)
+        }
 )
 $env:Path = ($sessionPaths + $envPathEntries) -join ";"
 Invoke-Native (Join-Path $scriptRoot "env.cmd") @("/persist")
@@ -266,13 +320,12 @@ $sdkPackages = @(
     "platform-tools",
     "emulator",
     "system-images;android-23;google_apis;x86_64",
-    "system-images;android-29;google_apis_playstore;x86_64",
     "system-images;android-34;google_apis;x86_64",
     "ndk;$ndkVersion"
 )
 Invoke-Native $sdkManager (@("--sdk_root=$sdkRoot") + $sdkPackages)
 
-Write-Host "[+] Create Android 6, 10, and 14 AVDs"
+Write-Host "[+] Create Android 6 and Android 14 AVDs"
 $emulator = Join-Path $sdkRoot "emulator\emulator.exe"
 $avdManager = Join-Path $commandLineTools "bin\avdmanager.bat"
 $avdHome = if ($env:ANDROID_AVD_HOME) {
@@ -284,7 +337,6 @@ else {
 $existingAvds = @(& $emulator -list-avds | ForEach-Object { $_.Trim() })
 $avds = @(
     @("android6", "system-images;android-23;google_apis;x86_64", "2G"),
-    @("android10", "system-images;android-29;google_apis_playstore;x86_64", "2G"),
     @("android14", "system-images;android-34;google_apis;x86_64", "4G")
 )
 foreach ($avd in $avds) {
@@ -304,22 +356,17 @@ Invoke-Native "emulator.exe" @("-list-avds")
 Invoke-Native "sdkmanager.bat" @("--version")
 Invoke-Native "avdmanager.bat" @("list", "avd")
 Invoke-Native "python.exe" @("--version")
-Invoke-Native "python.exe" @("-c", "import telnetlib, telnetlib3")
+Invoke-Native "python.exe" @(
+    "-c", "from Cryptodome.Cipher import AES; import cryptography, tqdm"
+)
 Invoke-Native "pip.exe" @("--version")
-Invoke-Native "frida.exe" @("--version")
-Invoke-Native "aeroot.exe" @("-h")
-Invoke-Native "gdb.exe" @("--version")
-Invoke-Native "gdb.exe" @("--batch", "-ex", "python import sys")
 Invoke-Native "clang.exe" @("--version")
 
 Write-Host ""
 Write-Host "[+] Installation complete"
 Write-Host "PowerShell emulator commands:"
 Write-Host "  emulator @android6"
-Write-Host "  emulator @android10"
 Write-Host "  emulator @android14"
-Write-Host "  emulator @android10 -no-snapshot-load -no-snapshot-save -qemu -s  # required before AERoot"
-Write-Host "  emulator @android14 -no-snapshot-load -no-snapshot-save -qemu -s  # required before AERoot"
 Write-Host ""
 Write-Host "Android lab commands:"
 Write-Host "  emulator -list-avds"
@@ -328,10 +375,6 @@ Write-Host "  sdkmanager --version"
 Write-Host "  avdmanager list avd"
 Write-Host "  python --version"
 Write-Host "  pip --version"
-Write-Host "  frida --version"
-Write-Host "  aeroot -h"
-Write-Host "  aeroot daemon"
-Write-Host "  gdb --version"
 Write-Host "  clang --version"
 Write-Host ""
 Write-Host "Standalone environment setup:"
