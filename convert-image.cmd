@@ -56,14 +56,6 @@ if not exist "%KEY_IN%" (
     echo error: missing image: %KEY_IN% 1>&2
     exit /b 1
 )
-if exist "%USERDATA_OUT%" (
-    echo error: output already exists: %USERDATA_OUT% 1>&2
-    exit /b 1
-)
-if exist "%KEY_OUT%" (
-    echo error: output already exists: %KEY_OUT% 1>&2
-    exit /b 1
-)
 
 echo [+] Convert %USERDATA_IN% -^> %USERDATA_OUT%
 echo [+] Run: "%QEMU_IMG%" convert -f qcow2 -O raw "%USERDATA_IN%" "%USERDATA_OUT%"

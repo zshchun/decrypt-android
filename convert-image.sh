@@ -56,8 +56,6 @@ key_in="$avd_dir/encryptionkey.img.qcow2"
 
 [[ -f "$userdata_in" ]] || die "missing image: $userdata_in"
 [[ -f "$key_in" ]] || die "missing image: $key_in"
-[[ ! -e "$userdata_out" ]] || die "output already exists: $userdata_out"
-[[ ! -e "$key_out" ]] || die "output already exists: $key_out"
 
 echo "[+] Convert $userdata_in -> $userdata_out"
 printf '[+] Run: qemu-img convert -f qcow2 -O raw %q %q\n' \
