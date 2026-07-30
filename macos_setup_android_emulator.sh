@@ -25,17 +25,28 @@ run() {
   "$@"
 }
 
-set_avd_config() {
+set_config_value() {
   local path="$1" key="$2" value="$3"
+  local separator="${4:-=}"
   local tmp
 
-  [[ -f "$path" ]] || die "AVD config not found: $path"
+  [[ -f "$path" ]] || die "Config not found: $path"
 
   tmp="$(mktemp)"
-  awk -v prefix="$key=" -v value="$value" '
-    index($0, prefix) == 1 { print prefix value; found = 1; next }
+  awk -v key="$key" -v value="$value" -v separator="$separator" '
+    {
+      current = $0
+      sub(/=.*/, "", current)
+      gsub(/^[[:space:]]+/, "", current)
+      gsub(/[[:space:]]+$/, "", current)
+    }
+    index($0, "=") && current == key {
+      print key separator value
+      found = 1
+      next
+    }
     { print }
-    END { if (!found) print prefix value }
+    END { if (!found) print key separator value }
   ' "$path" > "$tmp"
   mv "$tmp" "$path"
 }
@@ -151,6 +162,11 @@ run "$SDKMANAGER" "--sdk_root=$ANDROID_SDK_ROOT" \
   "$ANDROID6_PACKAGE" \
   "$ANDROID14_PACKAGE"
 
+echo "[+] Enable Android 6 userdata encryption"
+set_config_value \
+  "$ANDROID_SDK_ROOT/system-images/android-23/google_apis/arm64-v8a/advancedFeatures.ini" \
+  "EncryptUserData" "on" " = "
+
 echo "[+] Create Android 6 and Android 14 AVDs"
 mkdir -p "$AVD_HOME"
 EXISTING_AVDS="$("$ANDROID_SDK_ROOT/emulator/emulator" -list-avds || true)"
@@ -161,10 +177,10 @@ if ! printf '%s\n' "$EXISTING_AVDS" | grep -qx "android14"; then
   printf 'no\n' | "$AVDMANAGER" create avd --name android14 --package "$ANDROID14_PACKAGE"
 fi
 
-set_avd_config "$AVD_HOME/android6.avd/config.ini" "hw.keyboard" "yes"
-set_avd_config "$AVD_HOME/android6.avd/config.ini" "disk.dataPartition.size" "2G"
-set_avd_config "$AVD_HOME/android14.avd/config.ini" "hw.keyboard" "yes"
-set_avd_config "$AVD_HOME/android14.avd/config.ini" "disk.dataPartition.size" "4G"
+set_config_value "$AVD_HOME/android6.avd/config.ini" "hw.keyboard" "yes"
+set_config_value "$AVD_HOME/android6.avd/config.ini" "disk.dataPartition.size" "2G"
+set_config_value "$AVD_HOME/android14.avd/config.ini" "hw.keyboard" "yes"
+set_config_value "$AVD_HOME/android14.avd/config.ini" "disk.dataPartition.size" "4G"
 
 echo "[+] Validate Android tools"
 run java --version
