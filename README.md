@@ -6,7 +6,7 @@ This repository focuses on learning Android Encryption through practical example
 # Prerequisite
 - Debian/Ubuntu
 ```sh
-sudo apt install e2fsprogs fdisk file tree sqlite3 openssl xxd python3 python3-cryptography python3-tqdm
+sudo apt install e2fsprogs fdisk file tree sqlite3 openssl xxd python3 python3-cryptography python3-tqdm setools
 ```
 
 # Installation
