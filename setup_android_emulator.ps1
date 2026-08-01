@@ -158,8 +158,22 @@ $processor = Get-CimInstance Win32_Processor | Select-Object -First 1
 if ($processor.Architecture -ne 9) {
     throw "The x86_64 Android images require an x64 Windows host."
 }
-if ($processor.VirtualizationFirmwareEnabled -eq $false) {
-    throw "Enable Intel VT-x or AMD-V/SVM in UEFI/BIOS, then run this script again."
+$computerSystem = Get-CimInstance Win32_ComputerSystem
+if ($computerSystem.HypervisorPresent) {
+    Write-Host "[+] Windows hypervisor is running"
+}
+elseif ($processor.VirtualizationFirmwareEnabled -eq $false) {
+    Write-Warning (
+        "Win32_Processor reported VirtualizationFirmwareEnabled=False. " +
+        "That flag alone is not conclusive, so the Android Emulator will " +
+        "verify WHPX after installation."
+    )
+}
+else {
+    Write-Warning (
+        "The Windows hypervisor is not running. Restart Windows if WHPX was " +
+        "just enabled; the Android Emulator will verify WHPX after installation."
+    )
 }
 
 Write-Host "[+] Install Microsoft OpenJDK 21 for the current user"
@@ -348,7 +362,13 @@ foreach ($avd in $avds) {
 }
 
 Write-Host "[+] Validate WHPX, ADB, and AVDs"
-Invoke-Native "emulator.exe" @("-accel-check")
+& $emulator "-accel-check"
+if ($LASTEXITCODE -ne 0) {
+    throw (
+        "WHPX is installed but not usable. Confirm that Virtualization is " +
+        "Enabled in Task Manager, then restart Windows and run this script again."
+    )
+}
 Invoke-Native "adb.exe" @("version")
 Invoke-Native "emulator.exe" @("-list-avds")
 Invoke-Native "sdkmanager.bat" @("--version")

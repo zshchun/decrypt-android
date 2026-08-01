@@ -10,7 +10,10 @@ sudo apt install e2fsprogs fdisk file tree sqlite3 openssl xxd python3 python3-c
 ```
 
 # Installation
-It has been tested on WSL running the Ubuntu 24.04 distribution
+
+## Linux / WSL
+
+It has been tested on WSL running the Ubuntu 24.04 distribution.
 
 The instructions below will automatically download the Android emulator and create avd images.
 - Android 6.0 for FDE
@@ -19,6 +22,21 @@ The instructions below will automatically download the Android emulator and crea
 ```
 ./setup_android_emulator.sh
 ```
+
+## Windows
+
+Run the command wrapper from PowerShell. It applies `ExecutionPolicy Bypass`
+only to the installer process; it does not change the system or user policy.
+
+```powershell
+.\setup_android_emulator.cmd
+```
+
+Accept the UAC prompt that enables Windows Hypervisor Platform (WHPX). If the
+installer requests a restart, restart Windows and run the command again. If the
+final WHPX check fails, confirm that Task Manager's CPU page shows
+`Virtualization: Enabled` and that `Windows Hypervisor Platform` is enabled in
+Windows Features, then restart Windows.
 
 # FDE
 ```
