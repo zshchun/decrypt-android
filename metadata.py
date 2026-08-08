@@ -167,8 +167,6 @@ def decrypt_image(input_file, output_file, key):
     output_path = Path(output_file)
     if Path(input_file).resolve() == output_path.resolve():
         raise MetadataDecryptError("input and output image must be different files")
-    if output_path.exists():
-        raise MetadataDecryptError(f"{output_file} already exists")
 
     print(f"[+] Input: {input_file}")
     print(f"[+] Output: {output_file}")
