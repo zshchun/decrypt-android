@@ -259,7 +259,7 @@ Invoke-Native $venvPython @(
 )
 Invoke-Native $venvPython @(
     "-m", "pip", "install",
-    "pycryptodomex", "cryptography", "tqdm"
+    "pycryptodomex", "cryptography", "tqdm", "frida", "frida-tools"
 )
 
 Write-Host "[+] Install Android command-line tools"
@@ -375,13 +375,21 @@ Invoke-Native "sdkmanager.bat" @("--version")
 Invoke-Native "avdmanager.bat" @("list", "avd")
 Invoke-Native "python.exe" @("--version")
 Invoke-Native "python.exe" @(
-    "-c", "from Cryptodome.Cipher import AES; import cryptography, tqdm"
+    "-c", "from Cryptodome.Cipher import AES; import cryptography, tqdm, frida"
 )
 Invoke-Native "pip.exe" @("--version")
+Invoke-Native "frida.exe" @("--version")
+if (-not (Get-Command "frida-ps.exe" -ErrorAction SilentlyContinue)) {
+    throw "frida-ps.exe was not found in PATH."
+}
+if (-not (Get-Command "frida-trace.exe" -ErrorAction SilentlyContinue)) {
+    throw "frida-trace.exe was not found in PATH."
+}
 Invoke-Native "clang.exe" @("--version")
 
 Write-Host ""
 Write-Host "[+] Installation complete"
+Write-Host "Open a new PowerShell window to use the persisted Android lab PATH."
 Write-Host "PowerShell emulator commands:"
 Write-Host "  emulator @android6"
 Write-Host "  emulator @android14"
@@ -393,6 +401,9 @@ Write-Host "  sdkmanager --version"
 Write-Host "  avdmanager list avd"
 Write-Host "  python --version"
 Write-Host "  pip --version"
+Write-Host "  frida --version"
+Write-Host "  frida-ps --help"
+Write-Host "  frida-trace --help"
 Write-Host "  clang --version"
 Write-Host ""
 Write-Host "Standalone environment setup:"
