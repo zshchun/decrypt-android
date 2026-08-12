@@ -101,7 +101,7 @@ if [[ ! -x "$ANDROID_LAB_VENV/bin/python" ]]; then
   run python3 -m venv "$ANDROID_LAB_VENV"
 fi
 run "$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
-run "$ANDROID_LAB_VENV/bin/python" -m pip install pycryptodomex cryptography tqdm
+run "$ANDROID_LAB_VENV/bin/python" -m pip install pycryptodomex cryptography tqdm frida frida-tools
 
 echo "[+] Install Android command-line tools"
 COMMAND_LINE_TOOLS="$ANDROID_SDK_ROOT/cmdline-tools/latest"
@@ -175,7 +175,10 @@ run "$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" --versi
 if ! "$ANDROID_SDK_ROOT/emulator/emulator" -accel-check; then
   echo "warning: emulator acceleration check failed. Check macOS Hypervisor.framework support." >&2
 fi
-run "$ANDROID_LAB_VENV/bin/python" -c "from Cryptodome.Cipher import AES; import cryptography, tqdm"
+run "$ANDROID_LAB_VENV/bin/python" -c "from Cryptodome.Cipher import AES; import cryptography, tqdm, frida"
+run frida --version
+command -v frida-ps >/dev/null || die "frida-ps was not found in PATH."
+command -v frida-trace >/dev/null || die "frida-trace was not found in PATH."
 
 echo ""
 echo "[+] Installation complete"

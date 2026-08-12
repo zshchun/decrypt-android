@@ -2,19 +2,28 @@
 set -eo pipefail
 
 NDK_VERSION=29.0.14206865
+ANDROID_LAB_VENV=$HOME/.android-lab/.venv
 
 echo "[+] Install linux packages"
 sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd tree fdisk cryptsetup openssl
 
+echo "[+] Install Frida"
+if [ ! -x "$ANDROID_LAB_VENV/bin/python" ]; then
+    python3 -m venv "$ANDROID_LAB_VENV"
+fi
+"$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
+"$ANDROID_LAB_VENV/bin/python" -m pip install frida frida-tools
+
 echo "[+] Configure environment settings"
 export ANDROID_HOME=$HOME/android
 export ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/$NDK_VERSION
-export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/sdk/cmdline-tools/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin
+export PATH=$ANDROID_LAB_VENV/bin:$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/sdk/cmdline-tools/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin
 
 echo "[+] Add bashrc settings"
 echo 'export ANDROID_HOME=$HOME/android' >> ~/.bashrc
 echo "export ANDROID_NDK_ROOT=\$ANDROID_HOME/ndk/$NDK_VERSION" >> ~/.bashrc
-echo 'export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/sdk/cmdline-tools/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin' >> ~/.bashrc
+echo 'export ANDROID_LAB_VENV=$HOME/.android-lab/.venv' >> ~/.bashrc
+echo 'export PATH=$ANDROID_LAB_VENV/bin:$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/sdk/cmdline-tools/bin:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin' >> ~/.bashrc
 
 echo "[+] Add the user to the KVM group"
 sudo gpasswd -a $USER kvm
@@ -51,6 +60,10 @@ emulator -list-avds
 echo "[+] Installation complete"
 java --version
 "$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" --version
+"$ANDROID_LAB_VENV/bin/python" -c "import frida"
+frida --version
+command -v frida-ps >/dev/null
+command -v frida-trace >/dev/null
 echo "[+] Requires Java 17+."
 
 popd
