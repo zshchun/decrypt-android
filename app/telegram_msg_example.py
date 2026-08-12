@@ -1,7 +1,18 @@
 #!/usr/bin/python3
 import sqlite3
 import string
-from hexdump import hexdump # simple-hexdump
+
+
+def hexdump(data, width=16):
+    lines = []
+    for offset in range(0, len(data), width):
+        chunk = data[offset:offset + width]
+        hex_bytes = ' '.join(f'{byte:02x}' for byte in chunk)
+        ascii_bytes = ''.join(chr(byte) if 32 <= byte <= 126 else '.' for byte in chunk)
+        lines.append(f'{offset:08x}  {hex_bytes:<{width * 3 - 1}}  |{ascii_bytes}|')
+    return '\n'.join(lines)
+
+
 conn = sqlite3.connect('cache4.db')
 cursor = conn.cursor()
 
