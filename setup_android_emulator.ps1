@@ -255,10 +255,10 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
     Invoke-Native $python @("-m", "venv", $venvRoot)
 }
 Invoke-Native $venvPython @(
-    "-m", "pip", "install", "--upgrade", "pip"
+    "-m", "pip", "install", "--no-cache-dir", "--upgrade", "pip"
 )
 Invoke-Native $venvPython @(
-    "-m", "pip", "install",
+    "-m", "pip", "install", "--no-cache-dir",
     "pycryptodomex", "cryptography", "tqdm", "frida", "frida-tools"
 )
 Invoke-Native (Join-Path $venvRoot "Scripts\frida-pm.exe") @(
