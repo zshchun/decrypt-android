@@ -261,6 +261,9 @@ Invoke-Native $venvPython @(
     "-m", "pip", "install",
     "pycryptodomex", "cryptography", "tqdm", "frida", "frida-tools"
 )
+Invoke-Native (Join-Path $venvRoot "Scripts\frida-pm.exe") @(
+    "install", "--project-root", (Join-Path $scriptRoot "frida"), "--quiet"
+)
 
 Write-Host "[+] Install Android command-line tools"
 $commandLineTools = Join-Path $sdkRoot "cmdline-tools\latest"
@@ -385,6 +388,9 @@ if (-not (Get-Command "frida-ps.exe" -ErrorAction SilentlyContinue)) {
 if (-not (Get-Command "frida-trace.exe" -ErrorAction SilentlyContinue)) {
     throw "frida-trace.exe was not found in PATH."
 }
+if (-not (Get-Command "frida-pm.exe" -ErrorAction SilentlyContinue)) {
+    throw "frida-pm.exe was not found in PATH."
+}
 Invoke-Native "clang.exe" @("--version")
 
 Write-Host ""
@@ -404,6 +410,7 @@ Write-Host "  pip --version"
 Write-Host "  frida --version"
 Write-Host "  frida-ps --help"
 Write-Host "  frida-trace --help"
+Write-Host "  frida-pm --help"
 Write-Host "  clang --version"
 Write-Host ""
 Write-Host "Standalone environment setup:"

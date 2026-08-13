@@ -9,6 +9,7 @@
 *.img
 *.zip
 __pycache__
+node_modules/
 tmp
 dec
 key

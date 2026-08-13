@@ -3,6 +3,7 @@ set -euo pipefail
 
 TOOLS_VERSION=15859902
 TOOLS_HASH="835b62a26162b229b441d1f6d4680383815a270809eb33522c0d480fa5002c4e"
+SCRIPT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 NDK_VERSION=29.0.14206865
 ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}
 if [[ "$ANDROID_SDK_ROOT" == "/usr/lib/android-sdk" ]]; then
@@ -102,6 +103,7 @@ if [[ ! -x "$ANDROID_LAB_VENV/bin/python" ]]; then
 fi
 run "$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
 run "$ANDROID_LAB_VENV/bin/python" -m pip install pycryptodomex cryptography tqdm frida frida-tools
+run "$ANDROID_LAB_VENV/bin/frida-pm" install --project-root "$SCRIPT_ROOT/frida" --quiet
 
 echo "[+] Install Android command-line tools"
 COMMAND_LINE_TOOLS="$ANDROID_SDK_ROOT/cmdline-tools/latest"
@@ -179,6 +181,7 @@ run "$ANDROID_LAB_VENV/bin/python" -c "from Cryptodome.Cipher import AES; import
 run frida --version
 command -v frida-ps >/dev/null || die "frida-ps was not found in PATH."
 command -v frida-trace >/dev/null || die "frida-trace was not found in PATH."
+command -v frida-pm >/dev/null || die "frida-pm was not found in PATH."
 
 echo ""
 echo "[+] Installation complete"

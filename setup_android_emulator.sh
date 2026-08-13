@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
+SCRIPT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 NDK_VERSION=29.0.14206865
 ANDROID_LAB_VENV=$HOME/.android-lab/.venv
 
@@ -13,6 +14,7 @@ if [ ! -x "$ANDROID_LAB_VENV/bin/python" ]; then
 fi
 "$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
 "$ANDROID_LAB_VENV/bin/python" -m pip install frida frida-tools
+"$ANDROID_LAB_VENV/bin/frida-pm" install --project-root "$SCRIPT_ROOT/frida" --quiet
 
 echo "[+] Configure environment settings"
 export ANDROID_HOME=$HOME/android
@@ -64,6 +66,7 @@ java --version
 frida --version
 command -v frida-ps >/dev/null
 command -v frida-trace >/dev/null
+command -v frida-pm >/dev/null
 echo "[+] Requires Java 17+."
 
 popd
