@@ -17,3 +17,6 @@ dir
 ext4
 rooting
 tests
+users
+package-lock.json
+package.json

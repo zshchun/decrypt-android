@@ -14,7 +14,7 @@ if [ ! -x "$ANDROID_LAB_VENV/bin/python" ]; then
 fi
 "$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
 "$ANDROID_LAB_VENV/bin/python" -m pip install frida frida-tools
-"$ANDROID_LAB_VENV/bin/frida-pm" install --project-root "$SCRIPT_ROOT/frida" --quiet
+"$ANDROID_LAB_VENV/bin/frida-pm" install frida-java-bridge --project-root "$SCRIPT_ROOT/frida" --quiet
 
 echo "[+] Configure environment settings"
 export ANDROID_HOME=$HOME/android

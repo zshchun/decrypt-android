@@ -262,7 +262,7 @@ Invoke-Native $venvPython @(
     "pycryptodomex", "cryptography", "tqdm", "frida", "frida-tools"
 )
 Invoke-Native (Join-Path $venvRoot "Scripts\frida-pm.exe") @(
-    "install", "--project-root", (Join-Path $scriptRoot "frida"), "--quiet"
+    "install", "frida-java-bridge", "--project-root", (Join-Path $scriptRoot "frida"), "--quiet"
 )
 
 Write-Host "[+] Install Android command-line tools"

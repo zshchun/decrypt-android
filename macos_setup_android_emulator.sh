@@ -103,7 +103,7 @@ if [[ ! -x "$ANDROID_LAB_VENV/bin/python" ]]; then
 fi
 run "$ANDROID_LAB_VENV/bin/python" -m pip install --upgrade pip
 run "$ANDROID_LAB_VENV/bin/python" -m pip install pycryptodomex cryptography tqdm frida frida-tools
-run "$ANDROID_LAB_VENV/bin/frida-pm" install --project-root "$SCRIPT_ROOT/frida" --quiet
+run "$ANDROID_LAB_VENV/bin/frida-pm" install frida-java-bridge --project-root "$SCRIPT_ROOT/frida" --quiet
 
 echo "[+] Install Android command-line tools"
 COMMAND_LINE_TOOLS="$ANDROID_SDK_ROOT/cmdline-tools/latest"
