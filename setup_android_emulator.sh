@@ -6,7 +6,7 @@ NDK_VERSION=29.0.14206865
 ANDROID_LAB_VENV=$HOME/.android-lab/.venv
 
 echo "[+] Install linux packages"
-sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd tree fdisk cryptsetup openssl
+sudo apt install -y git vim curl unzip qemu-utils python3-pycryptodome python3-venv python3-cryptography python3-tqdm python3-pip sqlite3 sqlcipher e2fsprogs default-jdk ent pulseaudio apktool netcat-openbsd tree fdisk cryptsetup openssl
 
 echo "[+] Install Frida"
 if [ ! -x "$ANDROID_LAB_VENV/bin/python" ]; then
